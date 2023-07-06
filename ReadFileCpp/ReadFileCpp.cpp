@@ -80,7 +80,8 @@ vector<string> ExploreFolder(string path) {
 }
 #pragma endregion
 
-#pragma region Getline from file
+#pragma region GetLinesFromFile function
+// Returns a list of lines in a given file
 vector<string> GetLinesFromFile(string path) {
     ifstream myFile(path);
     vector<string> myLines;
@@ -170,6 +171,8 @@ int main()
     //    return 1;
     //}
     #pragma endregion
+
+#pragma region Code example: Read lines in a file 
     vector<string> file;
     
     try {
@@ -184,7 +187,7 @@ int main()
     catch (const std::exception &e) {
         cout << "Error: " << e.what() << '\n';
     }
-    
+#pragma endregion
 
     return 0;
 }
