@@ -149,22 +149,24 @@ int main()
     }*/
     #pragma endregion
 
-#pragma region Code example: Read lines in a file 
+    #pragma region Code example: Read lines in a file
+    // Initializing variable
     vector<string> file;
     
     try {
+        // Calling the function that returns a list of line in a file
         file = GetLinesFromFile("teste.wksp");
 
-        cout << "File read successfully\n";
-
+        // Printing the list of lines
         for (int i = 0; i < file.size(); i++) {
             cout << file[i] << '\n';
         }
     }
+    // Exception treatment
     catch (const std::exception &e) {
         cout << "Error: " << e.what() << '\n';
     }
-#pragma endregion
+    #pragma endregion
 
     return 0;
 }
