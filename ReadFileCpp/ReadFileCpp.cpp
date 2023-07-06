@@ -1,19 +1,23 @@
 #include <iostream>
 #include <windows.h>
 #include <vector>
+#include <string>
 #include <fstream>
 
 using namespace std;
 
+#pragma region Get Execution Path
+// Get the execution path
 wstring ExePath() {
-    // Get the execution path
     TCHAR buffer[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, buffer, MAX_PATH);
     wstring::size_type pos = wstring(buffer).find_last_of(L"\\/");
 
     return wstring(buffer).substr(0, pos+1);
 }
+#pragma endregion
 
+#pragma region Test funciton for return a vector
 vector<string> ReturnVectorTest() {
     vector<string> test;
 
@@ -23,7 +27,10 @@ vector<string> ReturnVectorTest() {
 
     return test;
 }
+#pragma endregion
 
+#pragma region CompareString function
+// return 1 if strings are the same, return 0 if they are not
 int CompareString(string in1, string in2) {
     int res = in1.compare(in2);
 
@@ -36,8 +43,11 @@ int CompareString(string in1, string in2) {
         return 0;
     }
 }
+#pragma endregion
 
-vector<string> ExplorerFolder(string path) {
+#pragma region ExploreFolder function
+// Returns a list of paths inside that directory
+vector<string> ExploreFolder(string path) {
     // Declare variables
     vector<string> names;
     string searchPath = path + "/*.*";
@@ -68,86 +78,114 @@ vector<string> ExplorerFolder(string path) {
     
     return names;
 }
+#pragma endregion
 
+#pragma region Getline from file
+vector<string> GetLinesFromFile(string path) {
+    ifstream myFile(path);
+    vector<string> myLines;
+    string myLine;
 
-/*
+    // Tell the runtime that an error ocurred while opening the file
+    if (myFile.fail()) {
+        throw std::runtime_error("Unable to open file");
+    }
+
+    if (myFile.is_open()) {
+        while (myFile) {
+            myLine = "";
+            std::getline(myFile, myLine);
+
+            myLines.push_back(myLine);
+        }
+    }
+
+    return myLines;
+}
+#pragma endregion
+
 int main()
 {
-    #pragma region Compare String
+    #pragma region Code example: Comparing two strings
     /*
     string input1;
     string input2;
 
-    cout << "Please enter a string to compare: \n";
+    cout << "please enter a string to compare: \n";
     cin >> input1;
 
-    cout << "Please enter another string to compare: \n";
+    cout << "please enter another string to compare: \n";
     cin >> input2;
 
-    CompareString(input1, input2);
+    comparestring(input1, input2);
     */
     #pragma endregion
 
-    #pragma region Return vector
+    #pragma region Code example: Get a list of vector from a function
     /*
-    vector<string> test = ReturnVectorTest();
-    cout << "Returned vector:" << endl;
+    vector<string> test = returnvectortest();
+    cout << "returned vector:" << endl;
 
     for (int i = 0; i < test.size(); i++) {
         cout << test[i] << endl;
     }*/
     #pragma endregion
 
-    #pragma region Get File Path
-    /*
-    wstring path = ExePath();
-    string pathS(path.begin(), path.end());
+    #pragma region Code example: Get current execution path
+    /*wstring path = ExePath();
+    string paths(path.begin(), path.end());
     
-    //cout << "The current execution path is: \n" << pathS;
+    cout << "the current execution path is: \n" << paths;*/
     #pragma endregion
     
-    #pragma region Folder explorer - Windows
-    vector<string> fileNames;
+    #pragma region Code example: List current files in execution path
+    /*vector<string> filenames;
     
-    fileNames = ExplorerFolder(pathS);
+    filenames = ExploreFolder(paths);
 
-    for (int i = 0; i < fileNames.size(); i++) {
-        cout << i << ": " << fileNames[i] << endl;
-    }
-
+    for (int i = 0; i < filenames.size(); i++) {
+        cout << i << ": " << filenames[i] << endl;
+    }*/
     #pragma endregion
 
-    #pragma region Read text file
-    string file;
-    fstream myFile;
+    #pragma region read text file
+    // You can pass the file path while initializing the variable
+    //ifstream myFile("teste.wksp");
+    //string myString;
 
-    myFile.open("teste.txt", ios::in);
+    //if (myFile.is_open()) {
+    //    char myChar;
 
-    if (!myFile) {
-        cout << "Error reading file";
-    }
-    else {
-        char ch;
-        fstream infile;
-        string line;
+    //    while (myFile) {
+    //        std::getline(myFile, myString);
+    //        
+    //        // Piping myFile's content into myString
+    //        //myFile >> myString;
 
+    //        // Print the content in myString
+    //        std::cout << myString << '\n';
+    //    }
+    //    
 
+    //    return 1;
+    //}
+    #pragma endregion
+    vector<string> file;
+    
+    try {
+        file = GetLinesFromFile("teste.wksp");
 
-        while (1) {
-            myFile >> ch;
-            if (myFile.eof())
-                break;
+        cout << "File read successfully\n";
 
-            //myFile.getline(line, STRING);
+        for (int i = 0; i < file.size(); i++) {
+            cout << file[i] << '\n';
         }
     }
+    catch (const std::exception &e) {
+        cout << "Error: " << e.what() << '\n';
+    }
+    
 
-    myFile.close();
-
-
-    #pragma endregion
-
-    return 1;
+    return 0;
 }
 
-*/

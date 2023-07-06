@@ -38,6 +38,8 @@ int printBlock(block block) {
 }
 #pragma endregion
 
+/*
+#pragma region Main function
 int main() {
 	// Initialize variables
 	variable var1 = { "Input1", "[1213213,123123,123213]" };
@@ -58,4 +60,6 @@ int main() {
 	// Print the content of a block in console
 	printBlock(bloco);
 }
+#pragma endregion
+*/
 
