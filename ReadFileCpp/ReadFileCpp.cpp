@@ -149,29 +149,6 @@ int main()
     }*/
     #pragma endregion
 
-    #pragma region read text file
-    // You can pass the file path while initializing the variable
-    //ifstream myFile("teste.wksp");
-    //string myString;
-
-    //if (myFile.is_open()) {
-    //    char myChar;
-
-    //    while (myFile) {
-    //        std::getline(myFile, myString);
-    //        
-    //        // Piping myFile's content into myString
-    //        //myFile >> myString;
-
-    //        // Print the content in myString
-    //        std::cout << myString << '\n';
-    //    }
-    //    
-
-    //    return 1;
-    //}
-    #pragma endregion
-
 #pragma region Code example: Read lines in a file 
     vector<string> file;
     
