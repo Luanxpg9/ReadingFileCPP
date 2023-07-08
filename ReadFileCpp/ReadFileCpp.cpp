@@ -182,7 +182,7 @@ vector<string> GetLinesFromFile(string path) {
 
     // Tell the runtime that an error ocurred while opening the file
     if (myFile.fail()) {
-        throw std::runtime_error("Unable to open file");
+        throw std::runtime_error("GetLinesFromFile error >> Unable to open file");
     }
 
     if (myFile.is_open()) {
@@ -203,13 +203,15 @@ vector<string> GetLinesFromFile(string path) {
  * @param workflowLines A vector of lines containing the workflow file's lines.
  * @verbose If true prints in the console the comments found in the file.
  * @return A vector of comments
+ * 
+ * @throws runtime_error if workflowLines is empty
  */
 vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose) {
     
     // Throw error if there is no line
     //      Prevents from initializing vectors and structs
     if (workflowLines.empty()) {
-        throw std::runtime_error("Workflow lines are empty");
+        throw std::runtime_error("ParseWorkflowComments error >> Workflow lines are empty");
     }
     
 
@@ -223,7 +225,7 @@ vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose
             // Get Comment without the '#' character
             string comment = workflowLines[i].substr(1, workflowLines[i].length());
             Comment newComment = {
-                i,
+                i+1,
                 comment,
                 nullPosition
             };
@@ -233,7 +235,7 @@ vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose
 
             // Print function comments if verbose parameter is true
             if (verbose) {
-                cout << "Comment detected: \n" << "\t-> Line " << i << "\n\t--> Comment: " << comment << '\n';
+                cout << "Comment detected: \n" << "\t-> Line: " << i+1 << "\n\t-> Comment: " << comment << '\n';
             }
             
         }
@@ -316,14 +318,22 @@ int main()
 
         workflow = GetLinesFromFile(fileName);
 
-        vector<Comment> comments = ParseWorkflowComments(workflow, false);
+        vector<Comment> comments = ParseWorkflowComments(workflow, true);
 
         cout << "Found " << comments.size() << " comments in '" << fileName << '\'';
     }
     catch (const std::exception& e) {
         cout << "Error:" << e.what() << '\n';
     }
-    
+    #pragma endregion
+
+    #pragma region Code example: Parse Workflow Connections
+    try {
+
+    }
+    catch (const std::exception& e) {
+        cout << "Error:" << e.what() << '\n';
+    }
     #pragma endregion
 
     return 0;
