@@ -6,7 +6,100 @@
 
 using namespace std;
 
-#pragma region Get Execution Path
+#pragma region Enums
+enum VariableType {
+    Integer,
+    Double,
+    String,
+    Image
+};
+#pragma endregion
+
+#pragma region Structs
+// Variables can be global or inside a block
+struct Variable {
+    string key;
+    string value;
+    VariableType type;
+};
+
+struct Vector2 {
+    float x;
+    float y;
+};
+
+// Comments that are shown in the workflow file
+struct Comment {
+    // Line position in the workflow file
+    int line;
+    // The text that a commentary has
+    string text;
+    // Grid position in the User interface
+    Vector2 position;
+};
+
+// Output connection of a block
+struct Output {
+    // Identificator
+    int id;
+    // Output type
+    VariableType type;
+};
+
+// Input connection of a block
+struct Input {
+    // Identificator
+    int id;
+    // Input type
+    VariableType type;
+};
+// Note that the input and output look the same but are used to identify diferent things
+
+
+// A block defines a VGL function, Its parameters, variables, input and output
+struct Block {
+    // Identificator
+    int id;
+    // Used to define what VGL function it represents
+    string type;
+    // Block variables like the input parameters
+    vector<Variable> variables;
+    // The position in the 2d Grid
+    Vector2 position;
+    // Output node in this block
+    vector<Output> outputs;
+    vector<Input> inputs;
+};
+
+struct Connection {
+    // Connection identificator
+    int id;
+    // The block in which the connection will begin
+    int startBlock;
+    // The output in which the connection will begin on that block
+    int outputStartBlock;
+    // The block in which the connection will finish
+    int endBlock;
+    // The input in which the connection will finish
+    int inputEndBlock;
+};
+
+// Represents a workflow file in a struct pattern.
+struct Workflow {
+    // Variables that can be used in any function/block
+    vector<Variable> globalVariables;
+    // The blocks represents a VGL function that is called in the workflow
+    vector<Block> blocks;
+    // The connections between the blocks inside a workflow. The work like passing futher an variable to another block
+    vector<Connection> connections;
+    // A user can specify comments for a workflow that can be used to make a workflow more human readable
+    vector<Comment> comments;
+};
+
+#pragma endregion
+
+#pragma region Functions
+#pragma region Get Execution Path function
 // Get the execution path
 wstring ExePath() {
     TCHAR buffer[MAX_PATH] = { 0 };
@@ -17,7 +110,7 @@ wstring ExePath() {
 }
 #pragma endregion
 
-#pragma region Test funciton for return a vector
+#pragma region Test functon for return a vector
 vector<string> ReturnVectorTest() {
     vector<string> test;
 
@@ -104,6 +197,53 @@ vector<string> GetLinesFromFile(string path) {
     return myLines;
 }
 #pragma endregion
+/**
+ * Get workflow comment lines in a .wksp file
+ *
+ * @param workflowLines A vector of lines containing the workflow file's lines.
+ * @verbose If true prints in the console the comments found in the file.
+ * @return A vector of comments
+ */
+vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose) {
+    
+    // Throw error if there is no line
+    //      Prevents from initializing vectors and structs
+    if (workflowLines.empty()) {
+        throw std::runtime_error("Workflow lines are empty");
+    }
+    
+
+    vector<Comment> comments;
+
+    Vector2 nullPosition = { 0.0, 0.0 };
+
+    
+    for (int i = 0; i < workflowLines.size(); i++) {
+        if (workflowLines[i][0] == '#') {
+            // Get Comment without the '#' character
+            string comment = workflowLines[i].substr(1, workflowLines[i].length());
+            Comment newComment = {
+                i,
+                comment,
+                nullPosition
+            };
+
+            // Insert new comment into the comment vector
+            comments.push_back(newComment);
+
+            // Print function comments if verbose parameter is true
+            if (verbose) {
+                cout << "Comment detected: \n" << "\t-> Line " << i << "\n\t--> Comment: " << comment << '\n';
+            }
+            
+        }
+    }
+
+    return comments;
+}
+
+
+#pragma endregion
 
 int main()
 {
@@ -151,21 +291,39 @@ int main()
 
     #pragma region Code example: Read lines in a file
     // Initializing variable
-    vector<string> file;
-    
-    try {
-        // Calling the function that returns a list of line in a file
-        file = GetLinesFromFile("teste.wksp");
+    //vector<string> file;
+    //
+    //try {
+    //    // Calling the function that returns a list of line in a file
+    //    file = GetLinesFromFile("teste.wksp");
 
-        // Printing the list of lines
-        for (int i = 0; i < file.size(); i++) {
-            cout << file[i] << '\n';
-        }
+    //    // Printing the list of lines
+    //    for (int i = 0; i < file.size(); i++) {
+    //        cout << file[i] << '\n';
+    //    }
+    //}
+    //// Exception treatment
+    //catch (const std::exception &e) {
+    //    cout << "Error: " << e.what() << '\n';
+    //}
+    #pragma endregion
+
+    #pragma region Code example: Parse Workflow Comments
+    try {
+        vector<string> workflow;
+
+        string fileName = "teste.wksp";
+
+        workflow = GetLinesFromFile(fileName);
+
+        vector<Comment> comments = ParseWorkflowComments(workflow, false);
+
+        cout << "Found " << comments.size() << " comments in '" << fileName << '\'';
     }
-    // Exception treatment
-    catch (const std::exception &e) {
-        cout << "Error: " << e.what() << '\n';
+    catch (const std::exception& e) {
+        cout << "Error:" << e.what() << '\n';
     }
+    
     #pragma endregion
 
     return 0;
