@@ -99,6 +99,7 @@ struct Workflow {
 #pragma endregion
 
 #pragma region Functions
+
 #pragma region Get Execution Path function
 // Get the execution path
 wstring ExePath() {
@@ -197,6 +198,8 @@ vector<string> GetLinesFromFile(string path) {
     return myLines;
 }
 #pragma endregion
+
+#pragma region ParseWorkflowComments function
 /**
  * Get workflow comment lines in a .wksp file
  *
@@ -206,24 +209,26 @@ vector<string> GetLinesFromFile(string path) {
  * 
  * @throws runtime_error if workflowLines is empty
  */
-vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose) {
+vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose = false) {
     
     // Throw error if there is no line
     //      Prevents from initializing vectors and structs
     if (workflowLines.empty()) {
         throw std::runtime_error("ParseWorkflowComments error >> Workflow lines are empty");
     }
-    
 
+    // Initialize vector of comments for return
     vector<Comment> comments;
-
+    // Initialize a position when the workflow file does not specifie where it should be in the Visual Workflow Editor
     Vector2 nullPosition = { 0.0, 0.0 };
-
     
+    // Loop for parsing the file
     for (int i = 0; i < workflowLines.size(); i++) {
         if (workflowLines[i][0] == '#') {
             // Get Comment without the '#' character
             string comment = workflowLines[i].substr(1, workflowLines[i].length());
+
+            // Initialize the Comment struct for appending in the vector of comments
             Comment newComment = {
                 i+1,
                 comment,
@@ -243,9 +248,200 @@ vector<Comment> ParseWorkflowComments(vector<string> workflowLines, bool verbose
 
     return comments;
 }
-
-
 #pragma endregion
+
+#pragma region ParseWorkflowGlobalVariables function
+/**
+ * Get workflow global variables in a .wksp file
+ *
+ * @param workflowLines A vector of lines containing the workflow file's lines.
+ * @verbose If true prints in the console the comments found in the file.
+ * @return A vector of variables
+ *
+ * @throws invalid string position> if a variable is declared not folling the pattern 'key = value'
+ */
+vector<Variable> ParseWorkflowGlobalVariables(vector<string> workflowLines, bool verbose = false) {
+    // List of variables for return
+    vector<Variable> variables;
+    // Flag active when the VariableBegin is found
+    bool isVariableParserUp = false;
+
+    // Loop for parsing file
+    for (int i = 0; i < workflowLines.size(); i++) {
+
+        // Line by line logging
+        if (verbose) {
+            cout << "Workflow line being parsed> '" << workflowLines[i] << "'\n";
+        }
+
+        // Sinalizes that the search for variables has ended
+        if (workflowLines[i] == "VariablesEnd:") {
+
+            // Finished function
+            if (verbose) {
+                cout << "Finished parsing global variables\n\n";
+            }
+            isVariableParserUp = false;
+            break;
+        }
+
+        // Formating variable
+        if (isVariableParserUp && workflowLines[i][0] != '\n' && workflowLines[i][0] != ' ' && workflowLines[i][0] != '#' && workflowLines[i][0] != '\0') {
+
+            // To test: maybe a for will be faster than using find two times for getting indexes
+            string variableKey = workflowLines[i].substr(0, workflowLines[i].find_first_of(' '));
+            string variableValue = workflowLines[i].substr(workflowLines[i].find_first_of('=') + 2, workflowLines[i].size());
+
+            VariableType type = Integer;
+
+            Variable newVariable = {
+                variableKey,
+                variableValue,
+                type
+            };
+
+            // Found variable log
+            if (verbose) {
+                cout << "\t\tNew variable found: \n" << "\t\t\t->Key: '" << variableKey << "'\n" << "\t\t\t->Value: '" << variableValue << "'\n\n";
+            }
+
+            variables.push_back(newVariable);
+        }
+
+        // Sinalizes that the search for variables has begun
+        // Must be in the end for the parser code doesn't catch the 'VariablesBegin:'
+        if (workflowLines[i] == "VariablesBegin:") {
+            // Finished function
+            if (verbose) {
+                cout << "Starting parsing global variables\n\n";
+            }
+
+            isVariableParserUp = true;
+        }
+    }
+
+    // Return found variables
+    return variables;
+}
+#pragma endregion
+
+#pragma region ParseWorkflowBlocks function
+vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = false) {
+    vector<Block> blocks;
+
+    // Parsing workflow file
+    for (int i = 0; i < workflowLines.size(); i++) {
+        if (workflowLines[i].substr(0, 5) == "Glyph") {
+
+            cout << "Found Glyph on line " << i + 1 << ">>> " << workflowLines[i] << endl;
+
+            // Glyph line composition:
+            //  Glyph tag > Lib > Function > hostmachine > Glyph Id > X position > Y position > args 
+
+            // Init 
+            Vector2 functionNameIndex = { 0, 0 };
+            Vector2 hostMachineIndex = { 0, 0 };
+            Vector2 glyphIdIndex = { 0, 0 };
+            Vector2 xPositionIndex = { 0, 0 };
+            Vector2 yPositionIndex = { 0, 0 };
+            Vector2 functionArgsIndex = { 0, 0 };
+            
+            int lastDivIndex = 13;
+
+            int lineLength = workflowLines[i].size();
+
+            // Parsing workflow line
+            for (int j = 13; j < lineLength; j++) {
+                bool separator = workflowLines[i][j] == ':';
+                bool doubleSeparator = workflowLines[i][j] == ':' && workflowLines[i][j + 1] == ':';
+
+                cout << "\tChar " << j << ": " << workflowLines[i][j] << endl;
+
+
+                // Defines Function name
+                
+                functionNameIndex.x = 13;
+                if (functionNameIndex.y == 0 && separator) {
+                    functionNameIndex.y = j;
+                    // The 13 number is the character count for 'Glyph:VGL_CL:'
+                    cout << "\tFunction name>> " << workflowLines[i].substr(functionNameIndex.x, functionNameIndex.y-13) << endl;
+                    
+                    if (doubleSeparator) {
+                        hostMachineIndex.x = j + 2;
+                    }
+                    else {
+                        hostMachineIndex.x = j + 1;
+                    }
+                }
+                // Defines hostmachine
+                else if (hostMachineIndex.x != 0 && hostMachineIndex.y == 0 && separator && workflowLines[i][j-1] != ':') {
+                    hostMachineIndex.y = j;
+                    cout << "\tHostname>> " << workflowLines[i].substr(hostMachineIndex.x, hostMachineIndex.y - hostMachineIndex.x) << endl;
+                    break;
+                }
+
+                /*
+                // Defines Glyph Id
+                else if (hostMachineIndex.y != 0 && glyphIdIndex.x == 0 && validSeparator) {
+                    glyphIdIndex.x = j + 1;
+                    cout << "\tGlyph Id>> " << workflowLines[i].substr(hostMachineIndex.y, j - glyphIdIndex.x) << endl;
+                }*/
+
+            }
+        }
+            
+    }
+
+    return blocks;
+}
+#pragma endregion
+
+#pragma region ParseWorkflowConnections function
+/**
+ * Get workflow connections between blocks in a .wksp file
+ *
+ * @param workflowLines A vector of lines containing the workflow file's lines.
+ * @verbose If true prints in the console the comments found in the file.
+ * @return A vector of Connections
+ *
+ * @throws runtime_error if workflowLines is empty
+ */
+vector<Connection> ParseWorkflowConnections(vector<string> workflowLines, bool verbose) {
+
+    // Throw error if there is no line
+    //      Prevents from initializing vectors and structs
+    if (workflowLines.empty()) {
+        throw std::runtime_error("ParseWorkflowConnections error >> Workflow lines are empty");
+    }
+
+    // Initialize vector of comments for return
+    vector<Connection> connections;
+
+    // Loop for parsing the file
+    for (int i = 0; i < workflowLines.size(); i++) {
+        if (workflowLines[i].substr(0, 14) == "NodeConnection") {
+
+            // Parssing connection
+
+
+            // Print function comments if verbose parameter is true
+            if (verbose) {
+                cout << "Connection detected: " << workflowLines[i] << '\n';
+            }
+
+        }
+    }
+
+    if (verbose && connections.size() == 0) {
+        cout << "No connections where found";
+    }
+
+    return connections;
+}
+#pragma endregion
+
+
+
 
 int main()
 {
@@ -311,30 +507,58 @@ int main()
     #pragma endregion
 
     #pragma region Code example: Parse Workflow Comments
-    try {
+    /*try {
+        vector<string> workflow;
+
+
+        string fileName = "teste.wksp";
+
+        workflow = GetLinesFromFile(fileName);
+
+        for (int i = 0; i < workflow.size(); i++) {
+            cout << "Linha " << i << ": '" << workflow[i] << "'\n";
+        }
+
+        vector<Comment> comments = ParseWorkflowComments(workflow, false);
+
+        cout << "Found " << comments.size() << " comments in '" << fileName << '\'';
+    }
+    catch (const std::exception& e) {
+        cout << "Error:" << e.what() << '\n';
+    }*/
+    #pragma endregion
+
+    #pragma region Code example: Parse Workflow Global Variables
+    /*try {
+
         vector<string> workflow;
 
         string fileName = "teste.wksp";
 
         workflow = GetLinesFromFile(fileName);
 
-        vector<Comment> comments = ParseWorkflowComments(workflow, true);
-
-        cout << "Found " << comments.size() << " comments in '" << fileName << '\'';
+        vector<Variable> variables = ParseWorkflowGlobalVariables(workflow, true);
     }
     catch (const std::exception& e) {
-        cout << "Error:" << e.what() << '\n';
-    }
+        cout << "Error: " << e.what() << '\n';
+    }*/
     #pragma endregion
 
-    #pragma region Code example: Parse Workflow Connections
+#pragma region Code example: Parse Workflow Blocks
     try {
-
+    
+        vector<string> workflow;
+    
+        string fileName = "teste.wksp";
+    
+        workflow = GetLinesFromFile(fileName);
+    
+        vector<Block> blocks = ParseWorkflowBlocks(workflow, true);
     }
     catch (const std::exception& e) {
-        cout << "Error:" << e.what() << '\n';
+        cout << "Error: " << e.what() << '\n';
     }
-    #pragma endregion
+#pragma endregion
 
     return 0;
 }
