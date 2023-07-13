@@ -62,6 +62,8 @@ struct Block {
     int id;
     // Used to define what VGL function it represents
     string type;
+    // hostMachine defines where will the block of code run (Under development: use localhost)
+    string hostMachine;
     // Block variables like the input parameters
     vector<Variable> variables;
     // The position in the 2d Grid
@@ -325,47 +327,113 @@ vector<Variable> ParseWorkflowGlobalVariables(vector<string> workflowLines, bool
 }
 #pragma endregion
 
+#pragma region ParseVariable function
+Variable ParseVariable(string variable) {
+    int separator = variable.find_first_of(' ');
+
+    if (separator == 0) {
+        throw std::runtime_error("Not a valid format. Format must be a string like 'MyVariable MyValue'");
+    }
+
+    Variable var;
+
+    // Key and type will not be parsed
+    var.key = variable.substr(0, separator);
+
+    // Defines the variable type
+    if (variable[separator + 1] == '\'') {
+        var.type = VariableType::String;
+    }
+    else if (variable[separator + 1] == '[') {
+        var.type = VariableType::Image;
+    }
+    else if (isdigit(variable[separator + 1])) {
+        var.type = VariableType::Integer;
+    }
+    else {
+        var.type = VariableType::String;
+    }
+
+
+    if (var.type == String) {
+        // Start of value will be separator +2 so so remove the ' character we must add 1 and end up with three
+        int endPosition = variable.size() - separator - 3;
+
+        var.value = variable.substr(separator + 2, endPosition);
+    }
+    else {
+        // Do not parse
+        var.value = variable.substr(separator + 1, variable.size() - separator - 1);
+    }
+
+    return var;
+}
+#pragma endregion
+
 #pragma region ParseWorkflowBlocks function
 vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = false) {
     vector<Block> blocks;
 
-    // Parsing workflow file
+    // Parsing workflow file 
     for (int i = 0; i < workflowLines.size(); i++) {
         if (workflowLines[i].substr(0, 5) == "Glyph") {
 
-            cout << "Found Glyph on line " << i + 1 << ">>> " << workflowLines[i] << endl;
+            if (verbose) 
+                cout << "Found Glyph on line " << i + 1 << ">>> " << workflowLines[i] << endl;
 
+
+            // Turn this region into another function
+            #pragma region Parsing Block Line
             // Glyph line composition:
             //  Glyph tag > Lib > Function > hostmachine > Glyph Id > X position > Y position > args 
 
-            // Init 
+            // Init variables positions
             Vector2 functionNameIndex = { 0, 0 };
             Vector2 hostMachineIndex = { 0, 0 };
             Vector2 glyphIdIndex = { 0, 0 };
             Vector2 xPositionIndex = { 0, 0 };
             Vector2 yPositionIndex = { 0, 0 };
             Vector2 functionArgsIndex = { 0, 0 };
-            
-            int lastDivIndex = 13;
+            int variableStart = 0;
+
+            // Init variables
+            int blockId;
+            string variableRaw;
+            string blockType;
+            string blockHost;
+            Vector2 blockPosition = { 0, 0 };
+            vector<Variable> blockVariables;
 
             int lineLength = workflowLines[i].size();
 
-            // Parsing workflow line
+            
             for (int j = 13; j < lineLength; j++) {
-                bool separator = workflowLines[i][j] == ':';
+                // Defines split pattern
+                bool separator = workflowLines[i][j] == ':' && workflowLines[i][j - 1] != ':';
                 bool doubleSeparator = workflowLines[i][j] == ':' && workflowLines[i][j + 1] == ':';
+                bool variableSeparator = (workflowLines[i][j] == ' ' && workflowLines[i][j + 1] == '-');
 
-                cout << "\tChar " << j << ": " << workflowLines[i][j] << endl;
+                // Logs which character is being parsed
+                if (verbose)
+                    cout << "Char " << j << ": " << workflowLines[i][j] << endl;
 
+
+                // Start position of function name
+                functionNameIndex.x = 13;
 
                 // Defines Function name
-                
-                functionNameIndex.x = 13;
                 if (functionNameIndex.y == 0 && separator) {
+                    // End position of function name
                     functionNameIndex.y = j;
+
                     // The 13 number is the character count for 'Glyph:VGL_CL:'
-                    cout << "\tFunction name>> " << workflowLines[i].substr(functionNameIndex.x, functionNameIndex.y-13) << endl;
+                    blockType = workflowLines[i].substr(functionNameIndex.x, functionNameIndex.y - 13);
+
+                    // Logs a detected function name
+                    if (verbose)
+                        cout << "\tFunction name>> " << blockType << endl;
                     
+                    // Defines initial position for hostmachine
                     if (doubleSeparator) {
                         hostMachineIndex.x = j + 2;
                     }
@@ -374,22 +442,108 @@ vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = f
                     }
                 }
                 // Defines hostmachine
-                else if (hostMachineIndex.x != 0 && hostMachineIndex.y == 0 && separator && workflowLines[i][j-1] != ':') {
+                else if (hostMachineIndex.x != 0 && hostMachineIndex.y == 0 && separator) {
+                    // End position of hostmachine
                     hostMachineIndex.y = j;
-                    cout << "\tHostname>> " << workflowLines[i].substr(hostMachineIndex.x, hostMachineIndex.y - hostMachineIndex.x) << endl;
-                    break;
+
+                    blockHost = workflowLines[i].substr(hostMachineIndex.x, hostMachineIndex.y - hostMachineIndex.x);
+
+                    // Logs found hostname
+                    if (verbose)
+                        cout << "\tHostname>> " << blockHost << endl;
+
+                    // Defines initial position for GlyphId
+                    if (doubleSeparator) {
+                        glyphIdIndex.x = j + 2;
+                    }
+                    else {
+                        glyphIdIndex.x = j + 1;
+                    }
                 }
-
-                /*
                 // Defines Glyph Id
-                else if (hostMachineIndex.y != 0 && glyphIdIndex.x == 0 && validSeparator) {
-                    glyphIdIndex.x = j + 1;
-                    cout << "\tGlyph Id>> " << workflowLines[i].substr(hostMachineIndex.y, j - glyphIdIndex.x) << endl;
-                }*/
+                else if (glyphIdIndex.x != 0 && glyphIdIndex.y == 0 && separator) {
+                    // End position of GlyphId
+                    glyphIdIndex.y = j;
 
+                    // stoi convert string to int
+                    blockId = std::stoi(workflowLines[i].substr(glyphIdIndex.x, j - glyphIdIndex.x));
+
+                    // Logs found Glyph Id
+                    if (verbose)
+                        cout << "\tGlyph Id>> " << blockId << endl;
+
+                    // Defines initial position for X Position in grid
+                    if (doubleSeparator) {
+                        xPositionIndex.x = j + 2;
+                    }
+                    else {
+                        xPositionIndex.x = j + 1;
+                    }
+                }
+                // Defines Position X
+                else if (xPositionIndex.x != 0 && xPositionIndex.y == 0 && separator) {
+                    // End position of X Position in grid
+                    xPositionIndex.y = j;
+
+                    blockPosition.x = std::stoi(workflowLines[i].substr(xPositionIndex.x, j - xPositionIndex.x));
+
+                    // Logs found X Position
+                    if (verbose)
+                        cout << "\tX Position>> " << blockPosition.x << endl;
+
+                    // Defines initial position for Y Position in grid
+                    if (doubleSeparator) {
+                        yPositionIndex.x = j + 2;
+                    }
+                    else {
+                        yPositionIndex.x = j + 1;
+                    }
+                }
+                // Defines Position Y
+                else if (yPositionIndex.x != 0 && yPositionIndex.y == 0 && separator) {
+                    // End position of Y Position in grid
+                    yPositionIndex.y = j;
+
+                    blockPosition.y = std::stoi(workflowLines[i].substr(yPositionIndex.x, j - yPositionIndex.x));
+
+                    // Logs found Y Position on the grid
+                    if (verbose)
+                        cout << "\tY Position>> " << blockPosition.y << endl;
+                }
+                // Get block variables
+                else if (workflowLines[i][j] == ' '  && workflowLines[i][j+1] == '-' && variableStart == 0) {
+                    // Set the first variable start and used as a flag to warn that the following code will be variables
+                    variableStart = j + 2;
+                }
+                else if (variableSeparator && variableStart != 0) {
+                    // Set the first variable
+                    variableRaw = workflowLines[i].substr(variableStart, j - variableStart);
+
+                    // Add the found variable to the block variables list
+                    blockVariables.push_back(ParseVariable(variableRaw));
+
+                    // Logs the Function Variable
+                    if (verbose)
+                        cout << "\tFunction Variable>> " << workflowLines[i].substr(variableStart, j - variableStart) << endl;
+                    // Points the next variable start, if there is one
+                    variableStart = j + 2;
+                }
+                else if (j == lineLength - 1 && variableStart != 0) {
+                    variableRaw = workflowLines[i].substr(variableStart);
+
+                    // Add the las variable to the block variables list
+                    blockVariables.push_back(ParseVariable(variableRaw));
+
+                    // Logs the Last function variable
+                    if (verbose)
+                        cout << "\tFunction Variable>> " << workflowLines[i].substr(variableStart) << endl;
+                }
             }
+            #pragma endregion
+
+
+
         }
-            
     }
 
     return blocks;
@@ -544,7 +698,15 @@ int main()
     }*/
     #pragma endregion
 
-#pragma region Code example: Parse Workflow Blocks
+    #pragma region Code example: Parse variable
+    /*string variableUnparsed = "winname 'demoConvolution'";
+
+    Variable variableParsed = ParseVariable(variableUnparsed);
+
+    cout << "Key>>" << variableParsed.key << "<<\nValue>>" << variableParsed.value << "<<\n";*/
+    #pragma endregion
+
+    #pragma region Code example: Parse Workflow Blocks
     try {
     
         vector<string> workflow;
@@ -558,7 +720,7 @@ int main()
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';
     }
-#pragma endregion
+    #pragma endregion
 
     return 0;
 }
