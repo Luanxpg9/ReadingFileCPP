@@ -11,7 +11,8 @@ enum VariableType {
     Integer,
     Double,
     String,
-    Image
+    Image,
+    Data
 };
 #pragma endregion
 
@@ -80,11 +81,11 @@ struct Connection {
     // The block in which the connection will begin
     int startBlock;
     // The output in which the connection will begin on that block
-    int outputStartBlock;
+    string outputStartBlock;
     // The block in which the connection will finish
     int endBlock;
     // The input in which the connection will finish
-    int inputEndBlock;
+    string inputEndBlock;
 };
 
 // Represents a workflow file in a struct pattern.
@@ -98,6 +99,44 @@ struct Workflow {
     // A user can specify comments for a workflow that can be used to make a workflow more human readable
     vector<Comment> comments;
 };
+
+#pragma endregion
+
+#pragma region Suport Functions
+
+    #pragma region ToLower function
+void ToLower(string& str) {
+    for (int i = 0; i < str.size(); i++) {
+        std::tolower(str[i]);
+    }
+}
+
+    #pragma endregion
+
+    #pragma region StringToVariableType function
+
+
+VariableType StringToVariableType(string type) {
+    ToLower(type);
+
+    if (type == "str" || type == "string")
+        return VariableType::String;
+    
+    if (type == "int" || type == "integer")
+        return VariableType::Integer;
+
+    if (type == "double")
+        return VariableType::Double;
+
+    if (type == "img" || type == "image")
+        return VariableType::Image;
+
+    if (type == "data" || type == "byte")
+        return VariableType::Data;
+
+    return VariableType::String;
+}
+    #pragma endregion
 
 #pragma endregion
 
@@ -201,6 +240,8 @@ vector<string> GetLinesFromFile(string path) {
     return myLines;
 }
 #pragma endregion
+
+
 
     #pragma region ParseWorkflowComments function
 /**
@@ -567,7 +608,81 @@ vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = f
     return blocks;
 }
 #pragma endregion
+    
+    #pragma region ParseConnectionLine function
+Connection ParseConnectionLine(string line, vector<Block> blocks, bool verbose = false) {
+    
 
+
+    /* TODO
+    * 1. Parse the line string and get the variables [X]
+    * 2. Parse the variables into a Connection Node
+    * 3. Return the Connection
+    */
+
+    Connection newConnection = {};
+
+    int lineSize = line.size();
+
+    char separator = ':';
+
+    // Example NodeConnection:data:1:RETVAL:2:img
+    // NodeConnection sinalizer >> Data type >> Glyph Id Output >> Glyph output name >> Glyph Id Input >> Glyph input name
+
+    Vector2 dataType = { 0, 0 };
+    Vector2 glyphOutId = { 0, 0 };
+    Vector2 glyphOutput = { 0, 0 };
+    Vector2 glyphInId = { 0, 0 };
+    Vector2 glyphInput = { 0, 0 };
+
+    // Connection variables
+    string dataType;
+    int BlockOutputId;
+    int BlockOutputId;
+
+
+    // 15 is where the variables start
+    //  Example: NodeConnection:data:1:RETVAL:2:img and the 16 character is 'd'
+    for (int i = 15; i < lineSize; i++) {
+        bool isSeparator = line[i] == ':' || i == lineSize - 1;
+
+        if (dataType.x == 0 && isSeparator) {
+            dataType.x = 15;
+            dataType.y = i;
+
+            cout << "DataType = " << line.substr(dataType.x, dataType.y - dataType.x) << endl;
+        }
+        else if (glyphOutId.x == 0 && isSeparator) {
+            glyphOutId.x = dataType.y + 1;
+            glyphOutId.y = i;
+
+            cout << "Glyph Output Id = " << line.substr(glyphOutId.x, glyphOutId.y - glyphOutId.x) << endl;
+        }
+        else if (glyphOutput.x == 0 && isSeparator) {
+            glyphOutput.x = glyphOutId.y + 1;
+            glyphOutput.y = i;
+
+            cout << "Glyph Output = " << line.substr(glyphOutput.x, glyphOutput.y - glyphOutput.x) << endl;
+        }
+        else if (glyphInId.x == 0 && isSeparator) {
+            glyphInId.x = glyphOutput.y + 1;
+            glyphInId.y = i;
+
+            cout << "Glyph Output = " << line.substr(glyphInId.x, glyphInId.y - glyphInId.x) << endl;
+        }
+        else if (glyphInput.x == 0 && isSeparator) {
+            glyphInput.x = glyphInId.y + 1;
+            glyphInput.y = i;
+
+            cout << "Glyph Output = " << line.substr(glyphInput.x) << endl;
+        }
+    }
+
+    return newConnection;
+
+}
+    #pragma endregion
+    
     #pragma region ParseWorkflowConnections function
 /**
  * Get workflow connections between blocks in a .wksp file
@@ -578,7 +693,7 @@ vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = f
  *
  * @throws runtime_error if workflowLines is empty
  */
-vector<Connection> ParseWorkflowConnections(vector<string> workflowLines, bool verbose) {
+vector<Connection> ParseWorkflowConnections(vector<string> workflowLines, vector<Block> blocks, bool verbose = false) {
 
     // Throw error if there is no line
     //      Prevents from initializing vectors and structs
@@ -734,7 +849,28 @@ int main()
     
         workflow = GetLinesFromFile(fileName);
     
-        vector<Block> blocks = ParseWorkflowBlocks(workflow, true);
+        vector<Block> blocks = ParseWorkflowBlocks(workflow);
+    }
+    catch (const std::exception& e) {
+        cout << "Error: " << e.what() << '\n';
+    }
+    #pragma endregion
+
+    #pragma region Code example: Parse Workflow 
+    try {
+
+        vector<string> workflow;
+
+        string fileName = "teste.wksp";
+
+        workflow = GetLinesFromFile(fileName);
+
+        vector<Block> blocks = ParseWorkflowBlocks(workflow);
+
+        // Debugging ParseConnectionLine
+        Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", blocks, true);
+
+        //vector<Connection> connections = ParseWorkflowConnections(workflow, blocks, true);
     }
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';
