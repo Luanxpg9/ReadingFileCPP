@@ -41,16 +41,16 @@ struct Comment {
 
 // Output connection of a block
 struct Output {
-    // Identificator
-    int id;
+    // Output name
+    string name;
     // Output type
     VariableType type;
 };
 
 // Input connection of a block
 struct Input {
-    // Identificator
-    int id;
+    // Input name
+    string name;
     // Input type
     VariableType type;
 };
@@ -99,7 +99,6 @@ struct Workflow {
     // A user can specify comments for a workflow that can be used to make a workflow more human readable
     vector<Comment> comments;
 };
-
 #pragma endregion
 
 #pragma region Suport Functions
@@ -107,15 +106,13 @@ struct Workflow {
     #pragma region ToLower function
 void ToLower(string& str) {
     for (int i = 0; i < str.size(); i++) {
-        std::tolower(str[i]);
+        str[i] = tolower(str[i]);
     }
 }
 
     #pragma endregion
 
     #pragma region StringToVariableType function
-
-
 VariableType StringToVariableType(string type) {
     ToLower(type);
 
@@ -608,19 +605,44 @@ vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = f
     return blocks;
 }
 #pragma endregion
-    
+ 
+    #pragma region ParseIOConnection functions
+Output ParseOutput(int id, string name, string variableType) {
+    Output newOutput = {
+        id,
+        name,
+        StringToVariableType(variableType)
+    };
+
+    return newOutput;
+}
+
+Input ParseInput(int id, string name, string variableType) {
+    Input newInput = {
+        id,
+        name,
+        StringToVariableType(variableType)
+    };
+
+    return newInput;
+}
+
+#pragma endregion
+
     #pragma region ParseConnectionLine function
-Connection ParseConnectionLine(string line, vector<Block> blocks, bool verbose = false) {
+Connection ParseConnectionLine(string line, int id, vector<Block> blocks, bool verbose = false) {
     
 
 
     /* TODO
     * 1. Parse the line string and get the variables [X]
-    * 2. Parse the variables into a Connection Node
-    * 3. Return the Connection
+    * 2. Parse the variables into a Connection Node [X]
+    * 3. Return the Connection [X]
+    * 4. Insert into the blocks the inputs
+    * 5. Insert into the blocks the outputs
     */
 
-    Connection newConnection = {};
+    Connection newConnection;
 
     int lineSize = line.size();
 
@@ -636,9 +658,13 @@ Connection ParseConnectionLine(string line, vector<Block> blocks, bool verbose =
     Vector2 glyphInput = { 0, 0 };
 
     // Connection variables
-    string dataType;
-    int BlockOutputId;
-    int BlockOutputId;
+    string dataTypeConnection;
+    string blockOutputIdString;
+    int blockOutputId = 0;
+    string blockOutputName;
+    string blockInputIdString;
+    int blockInputId = 0;
+    string blockInputName;
 
 
     // 15 is where the variables start
@@ -650,36 +676,73 @@ Connection ParseConnectionLine(string line, vector<Block> blocks, bool verbose =
             dataType.x = 15;
             dataType.y = i;
 
-            cout << "DataType = " << line.substr(dataType.x, dataType.y - dataType.x) << endl;
+            // Catch variable
+            dataTypeConnection = line.substr(dataType.x, dataType.y - dataType.x);
+            // To lower
+            ToLower(dataTypeConnection);
+
+            if (verbose)
+                cout << "DataType = " << dataTypeConnection << endl;
+            
         }
         else if (glyphOutId.x == 0 && isSeparator) {
             glyphOutId.x = dataType.y + 1;
             glyphOutId.y = i;
 
-            cout << "Glyph Output Id = " << line.substr(glyphOutId.x, glyphOutId.y - glyphOutId.x) << endl;
+            // Catch string value
+            blockOutputIdString = line.substr(glyphOutId.x, glyphOutId.y - glyphOutId.x);
+
+            if (verbose)
+                cout << "Glyph Output Id = " << blockOutputIdString << endl;
+
+            // Convert to Integer
+            blockOutputId = stoi(blockOutputIdString);
         }
         else if (glyphOutput.x == 0 && isSeparator) {
             glyphOutput.x = glyphOutId.y + 1;
             glyphOutput.y = i;
 
-            cout << "Glyph Output = " << line.substr(glyphOutput.x, glyphOutput.y - glyphOutput.x) << endl;
+            blockOutputName = line.substr(glyphOutput.x, glyphOutput.y - glyphOutput.x);
+            ToLower(blockOutputName);
+
+            if (verbose)
+                cout << "Glyph Output name = " << blockOutputName << endl;
         }
         else if (glyphInId.x == 0 && isSeparator) {
             glyphInId.x = glyphOutput.y + 1;
             glyphInId.y = i;
 
-            cout << "Glyph Output = " << line.substr(glyphInId.x, glyphInId.y - glyphInId.x) << endl;
+            blockInputIdString = line.substr(glyphInId.x, glyphInId.y - glyphInId.x);
+
+            if (verbose)
+                cout << "Glyph Input Id = " << blockInputIdString << endl;
+
+            // Convert to Integer
+            blockInputId = stoi(blockInputIdString);
+
         }
         else if (glyphInput.x == 0 && isSeparator) {
             glyphInput.x = glyphInId.y + 1;
             glyphInput.y = i;
 
-            cout << "Glyph Output = " << line.substr(glyphInput.x) << endl;
+            blockInputName = line.substr(glyphInput.x);
+            ToLower(blockInputName);
+
+            if (verbose)
+                cout << "Glyph Input name = " << blockInputName << endl;
         }
     }
 
-    return newConnection;
+    // Parse connection
+    newConnection = {
+        id,
+        blockOutputId,
+        blockOutputName,
+        blockInputId,
+        blockInputName
+    };
 
+    return newConnection;
 }
     #pragma endregion
     
@@ -709,7 +772,9 @@ vector<Connection> ParseWorkflowConnections(vector<string> workflowLines, vector
         if (workflowLines[i].substr(0, 14) == "NodeConnection") {
 
             // Parssing connection
+            Connection newConnection = ParseConnectionLine(workflowLines[i], connections.size(), blocks);
 
+            connections.push_back(newConnection);
 
             // Print function comments if verbose parameter is true
             if (verbose) {
@@ -868,7 +933,7 @@ int main()
         vector<Block> blocks = ParseWorkflowBlocks(workflow);
 
         // Debugging ParseConnectionLine
-        Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", blocks, true);
+        Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", 1, blocks, true);
 
         //vector<Connection> connections = ParseWorkflowConnections(workflow, blocks, true);
     }
