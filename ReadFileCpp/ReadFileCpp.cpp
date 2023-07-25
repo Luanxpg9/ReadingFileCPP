@@ -607,9 +607,8 @@ vector<Block> ParseWorkflowBlocks(vector<string> workflowLines, bool verbose = f
 #pragma endregion
  
     #pragma region ParseIOConnection functions
-Output ParseOutput(int id, string name, string variableType) {
+Output ParseOutput(string name, string variableType) {
     Output newOutput = {
-        id,
         name,
         StringToVariableType(variableType)
     };
@@ -617,9 +616,8 @@ Output ParseOutput(int id, string name, string variableType) {
     return newOutput;
 }
 
-Input ParseInput(int id, string name, string variableType) {
+Input ParseInput(string name, string variableType) {
     Input newInput = {
-        id,
         name,
         StringToVariableType(variableType)
     };
@@ -933,9 +931,13 @@ int main()
         vector<Block> blocks = ParseWorkflowBlocks(workflow);
 
         // Debugging ParseConnectionLine
-        Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", 1, blocks, true);
+        //Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", 1, blocks, true);
 
-        //vector<Connection> connections = ParseWorkflowConnections(workflow, blocks, true);
+        vector<Connection> connections = ParseWorkflowConnections(workflow, blocks);
+
+        for (Connection c : connections) {
+            cout << "Connection: " << c.id +1 << " | Line start: " << c.startBlock << " | Line end: " << c.endBlock << endl;
+        }
     }
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';
