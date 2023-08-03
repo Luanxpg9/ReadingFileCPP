@@ -414,7 +414,7 @@ Block ParseBlockLine(string line, bool verbose = false) {
     // Glyph line composition:
             //  Glyph tag > Lib > Function > hostmachine > Glyph Id > X position > Y position > args 
 
-            // Init variables positions
+    // Init variables positions
     Vector2 functionNameIndex = { 0, 0 };
     Vector2 hostMachineIndex = { 0, 0 };
     Vector2 glyphIdIndex = { 0, 0 };
