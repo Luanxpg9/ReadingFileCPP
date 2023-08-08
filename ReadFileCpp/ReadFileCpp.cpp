@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "WorkspaceBuilder.h"
 
 using namespace std;
 
@@ -904,7 +905,7 @@ int main()
     #pragma endregion
 
     #pragma region Code example: Parse Workflow Blocks
-    try {
+    /*try {
     
         vector<string> workflow;
     
@@ -916,7 +917,7 @@ int main()
     }
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';
-    }
+    }*/
     #pragma endregion
 
     #pragma region Code example: Parse Workflow 
@@ -926,18 +927,13 @@ int main()
 
         string fileName = "teste.wksp";
 
-        workflow = GetLinesFromFile(fileName);
+        workflow = WorkspaceBuilder::SupportFunctions::GetLinesFromFile(fileName);
 
-        vector<Block> blocks = ParseWorkflowBlocks(workflow);
+        vector<WorkspaceBuilder::Structs::Block> blocks = WorkspaceBuilder::Functions::ParseWorkflowBlocks(workflow);
 
-        // Debugging ParseConnectionLine
-        //Connection connection = ParseConnectionLine("NodeConnection:data:1:RETVAL:2:img", 1, blocks, true);
+        vector<WorkspaceBuilder::Structs::Connection> connections = WorkspaceBuilder::Functions::ParseWorkflowConnections(workflow, blocks);
 
-        vector<Connection> connections = ParseWorkflowConnections(workflow, blocks);
-
-        for (Connection c : connections) {
-            cout << "Connection: " << c.id +1 << " | Line start: " << c.startBlock << " | Line end: " << c.endBlock << endl;
-        }
+        WorkspaceBuilder::Functions::DistributeInputAndOutput(connections, blocks);
     }
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';

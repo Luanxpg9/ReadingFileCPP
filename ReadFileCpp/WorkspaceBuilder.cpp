@@ -557,5 +557,22 @@ namespace WorkspaceReader {
 
             return connections;
         }
+
+        void DistributeInputAndOutput(const std::vector<WorkspaceBuilder::Structs::Connection>& connections, std::vector<WorkspaceBuilder::Structs::Block>& blocks) {
+
+            // Percorrer a lista de connecçoes e para cara connecao adicionar a ligacao de input e output
+            WorkspaceBuilder::Structs::Connection connection;
+
+            for (WorkspaceBuilder::Structs::Connection connection : connections) {
+                // adicionar o input no bloco correspondente
+
+                std::string functionName = blocks.at(connection.startBlock).type;
+                std::cout << "Start block: " << connection.startBlock << "\t VGL function: " << functionName << std::endl;
+
+                functionName = blocks.at(connection.endBlock).type;
+                std::cout << "End block: " << connection.endBlock << "\t VGL function: " << functionName << std::endl;
+            }
+
+        }
     }
 }

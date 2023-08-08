@@ -241,5 +241,8 @@ namespace WorkspaceBuilder {
         * @return A VGL connection structure
         */
         std::vector<WorkspaceBuilder::Structs::Connection> ParseWorkflowConnections(const std::vector<std::string>& workflowLines, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose = false);
+
+        // On development
+        void DistributeInputAndOutput(const std::vector<WorkspaceBuilder::Structs::Connection>& connections, std::vector<WorkspaceBuilder::Structs::Block>& blocks);
     }
 }
