@@ -167,7 +167,7 @@ namespace WorkspaceBuilder {
         *
         * @throws invalid string position> if a variable is declared not folling the pattern 'key value'
         */
-        std::vector<WorkspaceBuilder::Structs::Variable> ParseWorkflowGlobalVariables(std::vector<std::string>& workflowLines, bool verbose = false);
+        std::vector<WorkspaceBuilder::Structs::Variable> ParseWorkflowGlobalVariables(const std::vector<std::string>& workflowLines, bool verbose = false);
 
         /**
         * Convert a string with "key value" to It's VGL workspace equivalent 
@@ -242,7 +242,6 @@ namespace WorkspaceBuilder {
         */
         std::vector<WorkspaceBuilder::Structs::Connection> ParseWorkflowConnections(const std::vector<std::string>& workflowLines, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose = false);
 
-        // On development
-        void DistributeInputAndOutput(const std::vector<WorkspaceBuilder::Structs::Connection>& connections, std::vector<WorkspaceBuilder::Structs::Block>& blocks);
+        WorkspaceBuilder::Structs::Workflow ParseWorkflow(const std::vector<std::string>& workflowLines, bool verbose = false);
     }
 }

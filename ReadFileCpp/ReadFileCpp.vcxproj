@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="ReadFileCpp.cpp" />
     <ClCompile Include="WorkspaceBuilder.cpp" />
   </ItemGroup>

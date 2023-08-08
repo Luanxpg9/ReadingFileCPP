@@ -1,7 +1,9 @@
+#pragma once
 #include "WorkspaceBuilder.h"
 
-namespace WorkspaceReader {
+namespace WorkspaceBuilder {
 	namespace SupportFunctions {
+
 		void ToLower(std::string& str) {
 			for (int i = 0; i < str.size(); i++) {
 				str[i] = tolower(str[i]);
@@ -30,7 +32,7 @@ namespace WorkspaceReader {
             return WorkspaceBuilder::Enums::VariableType::String;
         }
 
-        int CompareString(const std::string& in1,const std::string& in2, bool verbose = false) {
+        int CompareString(const std::string& in1,const std::string& in2, bool verbose) {
             int res = in1.compare(in2);
 
             if (res == 0) {
@@ -68,7 +70,7 @@ namespace WorkspaceReader {
 
     namespace Functions {
         
-        std::vector<WorkspaceBuilder::Structs::Comment> ParseWorkflowComments(const std::vector<std::string>& workflowLines, bool verbose = false) {
+        std::vector<WorkspaceBuilder::Structs::Comment> ParseWorkflowComments(const std::vector<std::string>& workflowLines, bool verbose) {
             // Throw error if there is no line
             //      Prevents from initializing vectors and structs
             if (workflowLines.empty()) {
@@ -106,7 +108,7 @@ namespace WorkspaceReader {
             return comments;
         }
 
-        std::vector<WorkspaceBuilder::Structs::Variable> ParseWorkflowGlobalVariables(std::vector<std::string>& workflowLines, bool verbose = false) {
+        std::vector<WorkspaceBuilder::Structs::Variable> ParseWorkflowGlobalVariables(const std::vector<std::string>& workflowLines, bool verbose) {
             // List of variables for return
             std::vector<WorkspaceBuilder::Structs::Variable> variables;
             // Flag active when the VariableBegin is found
@@ -115,18 +117,8 @@ namespace WorkspaceReader {
             // Loop for parsing file
             for (int i = 0; i < workflowLines.size(); i++) {
 
-                // Line by line logging
-                if (verbose) {
-                    std::cout << "Workflow line being parsed> '" << workflowLines[i] << "'\n";
-                }
-
                 // Sinalizes that the search for variables has ended
                 if (workflowLines[i] == "VariablesEnd:") {
-
-                    // Finished function
-                    if (verbose) {
-                        std::cout << "Finished parsing global variables\n\n";
-                    }
                     isVariableParserUp = false;
                     break;
                 }
@@ -148,7 +140,7 @@ namespace WorkspaceReader {
 
                     // Found variable log
                     if (verbose) {
-                        std::cout << "\t\tNew variable found: \n" << "\t\t\t->Key: '" << variableKey << "'\n" << "\t\t\t->Value: '" << variableValue << "'\n\n";
+                        std::cout << "\tNew variable found: \n" << "\t\t->Key: '" << variableKey << "'\n" << "\t\t->Value: '" << variableValue << "'\n\n";
                     }
 
                     variables.push_back(newVariable);
@@ -157,11 +149,6 @@ namespace WorkspaceReader {
                 // Sinalizes that the search for variables has begun
                 // Must be in the end for the parser code doesn't catch the 'VariablesBegin:'
                 if (workflowLines[i] == "VariablesBegin:") {
-                    // Finished function
-                    if (verbose) {
-                        std::cout << "Starting parsing global variables\n\n";
-                    }
-
                     isVariableParserUp = true;
                 }
             }
@@ -211,7 +198,7 @@ namespace WorkspaceReader {
             return var;
         }
 
-        WorkspaceBuilder::Structs::Block ParseBlockLine(const std::string& line, bool verbose = false) {
+        WorkspaceBuilder::Structs::Block ParseBlockLine(const std::string& line, bool verbose) {
             // Glyph line composition:
                     //  Glyph tag > Lib > Function > hostmachine > Glyph Id > X position > Y position > args 
 
@@ -242,8 +229,8 @@ namespace WorkspaceReader {
                 bool variableSeparator = line[i] == ' ' && line[i + 1] == '-';
 
                 // Logs which character is being parsed
-                if (verbose)
-                    std::cout << "Char " << i << ": " << line[i] << std::endl;
+                /*if (verbose)
+                    std::cout << "Char " << i << ": " << line[i] << std::endl;*/
 
                 // Start position of function name
                 functionNameIndex.x = 13;
@@ -383,7 +370,7 @@ namespace WorkspaceReader {
             return newBlock;
         }
 
-        std::vector<WorkspaceBuilder::Structs::Block> ParseWorkflowBlocks(const std::vector<std::string>& workflowLines, bool verbose = false) {
+        std::vector<WorkspaceBuilder::Structs::Block> ParseWorkflowBlocks(const std::vector<std::string>& workflowLines, bool verbose) {
             std::vector<WorkspaceBuilder::Structs::Block> blocks;
 
             // Parsing workflow file 
@@ -420,7 +407,7 @@ namespace WorkspaceReader {
             return newInput;
         }
 
-        WorkspaceBuilder::Structs::Connection ParseConnectionLine(const std::string& line, int id, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose = false) {
+        WorkspaceBuilder::Structs::Connection ParseConnectionLine(const std::string& line, int id, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose) {
             WorkspaceBuilder::Structs::Connection newConnection;
 
             int lineSize = line.size();
@@ -524,7 +511,7 @@ namespace WorkspaceReader {
             return newConnection;
         }
 
-        std::vector<WorkspaceBuilder::Structs::Connection> ParseWorkflowConnections(const std::vector<std::string>& workflowLines, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose = false) {
+        std::vector<WorkspaceBuilder::Structs::Connection> ParseWorkflowConnections(const std::vector<std::string>& workflowLines, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose) {
             // Throw error if there is no line
             //      Prevents from initializing vectors and structs
             if (workflowLines.empty()) {
@@ -558,21 +545,48 @@ namespace WorkspaceReader {
             return connections;
         }
 
-        void DistributeInputAndOutput(const std::vector<WorkspaceBuilder::Structs::Connection>& connections, std::vector<WorkspaceBuilder::Structs::Block>& blocks) {
+        WorkspaceBuilder::Structs::Workflow ParseWorkflow(const std::vector<std::string>& workflowLines, bool verbose) {
+            if (verbose)
+                std::cout << "Started parsing Workflow" << std::endl << std::endl;
 
-            // Percorrer a lista de connecçoes e para cara connecao adicionar a ligacao de input e output
-            WorkspaceBuilder::Structs::Connection connection;
 
-            for (WorkspaceBuilder::Structs::Connection connection : connections) {
-                // adicionar o input no bloco correspondente
+            if (verbose)
+                std::cout << "Started parsing Workflow Glyphs" << std::endl;
+            std::vector<WorkspaceBuilder::Structs::Block> blocks = ParseWorkflowBlocks(workflowLines, verbose);
+            if (verbose)
+                std::cout << "Finished parsing Workflow Glyphs" << std::endl << std::endl;
 
-                std::string functionName = blocks.at(connection.startBlock).type;
-                std::cout << "Start block: " << connection.startBlock << "\t VGL function: " << functionName << std::endl;
+            if (verbose)
+                std::cout << "Started parsing Workflow Connections" << std::endl;
+            std::vector<WorkspaceBuilder::Structs::Connection> connections = ParseWorkflowConnections(workflowLines, blocks, verbose);
+            if (verbose)
+                std::cout << "Started parsing Workflow Connections" << std::endl << std::endl;
 
-                functionName = blocks.at(connection.endBlock).type;
-                std::cout << "End block: " << connection.endBlock << "\t VGL function: " << functionName << std::endl;
-            }
+            if (verbose)
+                std::cout << "Started parsing Workflow Comments" << std::endl;
+            std::vector<WorkspaceBuilder::Structs::Comment> comments = ParseWorkflowComments(workflowLines, verbose);
+            if (verbose)
+                std::cout << "Finished parsing Workflow Comments" << std::endl << std::endl;
 
+            if (verbose)
+                std::cout << "Started parsing Workflow Global Variables" << std::endl;
+            std::vector<WorkspaceBuilder::Structs::Variable> globalVariables = ParseWorkflowGlobalVariables(workflowLines, verbose);
+            if (verbose)
+                std::cout << "Finished parsing Global Variables" << std::endl << std::endl;
+
+
+            if (verbose)
+                std::cout << "Finished parsing Workflow" << std::endl << std::endl;
+
+
+            WorkspaceBuilder::Structs::Workflow workflow = {
+                globalVariables,
+                blocks,
+                connections,
+                comments
+            };
+
+            return workflow;
         }
     }
 }

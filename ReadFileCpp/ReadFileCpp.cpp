@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include "WorkspaceBuilder.h"
 
 using namespace std;
 
@@ -795,7 +794,7 @@ vector<Connection> ParseWorkflowConnections(vector<string> workflowLines, vector
 
 
 
-int main()
+int mainDeprecated()
 {
     #pragma region Code example: Comparing two strings
     /*
@@ -921,6 +920,7 @@ int main()
     #pragma endregion
 
     #pragma region Code example: Parse Workflow 
+/*
     try {
 
         vector<string> workflow;
@@ -938,6 +938,7 @@ int main()
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';
     }
+    */
     #pragma endregion
 
     return 0;
