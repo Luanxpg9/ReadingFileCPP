@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ReadFileCpp.cpp">
-      <Filter>Arquivos de Origem</Filter>
-    </ClCompile>
     <ClCompile Include="WorkspaceBuilder.cpp">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>

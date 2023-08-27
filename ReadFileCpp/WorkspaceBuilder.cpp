@@ -10,7 +10,6 @@ namespace WorkspaceBuilder {
 			}
 		}
 
-
         WorkspaceBuilder::Enums::VariableType StringToVariableType(std::string type) {
             ToLower(type);
 
@@ -65,6 +64,16 @@ namespace WorkspaceBuilder {
             }
 
             return myLines;
+        }
+
+        void PushEndline(std::vector<std::string>& stringVector, int endlineCount) {
+            if (endlineCount < 0) endlineCount*(-1);
+            
+            std::string endline = " ";
+
+            for (int i = 0; i<endlineCount; i++) {
+                stringVector.push_back(endline);
+            }
         }
 	}
 
@@ -587,6 +596,96 @@ namespace WorkspaceBuilder {
             };
 
             return workflow;
+        }
+
+        std::vector<std::string> ConvertWorkflowToVectorString(const WorkspaceBuilder::Structs::Workflow& workflow, bool verbose) {
+            std::vector<std::string> workflowLines;
+            std::string separator = ":";
+
+            // Insert header
+            workflowLines.push_back("# VisionGL Visual Programming Workspace");
+            workflowLines.push_back("# ");
+            workflowLines.push_back("# This is an auto generated file.");
+            workflowLines.push_back("# All the code has been written by @luanxpg9 during the Thesis Conclusion Project from UFS");
+            workflowLines.push_back("# ");
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 3);
+
+            workflowLines.push_back("WorkspaceBegin: 1.0");
+
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 1);
+            
+            // Insert Variables
+            workflowLines.push_back("VariablesBegin: ");
+            for (WorkspaceBuilder::Structs::Variable var : workflow.globalVariables) {
+                std::string line = var.key;
+                line.append(" = ");
+                line.append(var.value);
+
+                workflowLines.push_back(line);
+            }
+            workflowLines.push_back("VariablesEnd: ");
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
+
+            // Insert Glyphs
+            for (WorkspaceBuilder::Structs::Block block : workflow.blocks) {
+                std::string line = "Glyph:VGL_CL:";
+                // Function type
+                line.append(block.type).append(separator);
+                // Hostmachine where the code will run
+                line.append(block.hostMachine).append(separator);
+                // Block id
+                line.append(std::to_string(block.id))
+                    .append(separator);
+                // Block X position on the grid
+                line.append(std::to_string((int)block.position.x))
+                    .append(separator);
+                // Block Y position on the grid
+                line.append(std::to_string((int)block.position.y))
+                    .append(separator);
+                line.append(" ");
+
+                // Append parameters
+                for (WorkspaceBuilder::Structs::Variable var : block.variables) {
+                    line.append("-")
+                        .append(var.key)
+                        .append(" ")
+                        .append(var.value)
+                        .append(" ");
+                }
+
+                workflowLines.push_back(line);
+            }
+
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
+
+            // Insert Connections
+            for (WorkspaceBuilder::Structs::Connection connection : workflow.connections) {
+                std::string line = "NodeConnection:data:";
+                line.append(std::to_string(connection.startBlock)).append(separator);
+                line.append(connection.outputStartBlock).append(separator);
+                line.append(std::to_string(connection.endBlock)).append(separator);
+                line.append(connection.inputEndBlock);
+
+                workflowLines.push_back(line);
+            }
+
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
+
+            // Insert Comments
+            workflowLines.push_back("AnnotationsBegin");
+            for (WorkspaceBuilder::Structs::Comment comment : workflow.comments) {
+                std::string line = "#";
+                line.append(comment.text);
+                
+                workflowLines.push_back(line);
+            }
+            workflowLines.push_back("AnnotationsEnd");
+
+            WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
+
+            workflowLines.push_back("WorkspaceEnd: 1.0");
+
+            return workflowLines;
         }
     }
 }

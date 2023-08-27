@@ -143,6 +143,15 @@ namespace WorkspaceBuilder {
         * @throws Unable to open file> if the given path is invalid
         */
         std::vector<std::string> GetLinesFromFile(const std::string& path);
+
+        /**
+        * Push back endline characters in the string vector.
+        *
+        * @param stringVector: The string vector where the endlines will be add
+        * @param endlineCount: The number of endlines to be inserted.
+        *
+        */
+        void PushEndline(std::vector<std::string>& stringVector, int endlineCount);
     }
     #pragma endregion
 
@@ -242,6 +251,15 @@ namespace WorkspaceBuilder {
         */
         std::vector<WorkspaceBuilder::Structs::Connection> ParseWorkflowConnections(const std::vector<std::string>& workflowLines, const std::vector<WorkspaceBuilder::Structs::Block>& blocks, bool verbose = false);
 
+        /**
+        * Convert a vector<string> in a workflow structure
+        *
+        * @param workflowLines: A vector of string with each string representing a line on a workspace file.
+        * @param verbose: If true prints in the console what the program is parsing. Default = false
+        * @return A VGL Workflow structure
+        */
         WorkspaceBuilder::Structs::Workflow ParseWorkflow(const std::vector<std::string>& workflowLines, bool verbose = false);
+
+        std::vector<std::string> ConvertWorkflowToVectorString(const WorkspaceBuilder::Structs::Workflow& workflow, bool verbose = false);
     }
 }

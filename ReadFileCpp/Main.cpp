@@ -8,11 +8,19 @@ int main() {
 
         vector<string> workflowLines;
 
+        vector<string> workflowLinesReparsed;
+
         string fileName = "teste.wksp";
 
         workflowLines = WorkspaceBuilder::SupportFunctions::GetLinesFromFile(fileName);
 
-        WorkspaceBuilder::Structs::Workflow workflow = WorkspaceBuilder::Functions::ParseWorkflow(workflowLines, true);
+        WorkspaceBuilder::Structs::Workflow workflow = WorkspaceBuilder::Functions::ParseWorkflow(workflowLines, false);
+
+        workflowLinesReparsed = WorkspaceBuilder::Functions::ConvertWorkflowToVectorString(workflow);
+
+        for (string line : workflowLinesReparsed) {
+            cout << line << endl;
+        }
 
     }
     catch (const std::exception& e) {
