@@ -22,6 +22,15 @@ int main() {
             cout << line << endl;
         }
 
+        int saved = WorkspaceBuilder::SupportFunctions::SaveWkspfile("testing123.wksp", workflowLinesReparsed);
+        
+        
+        if (saved) {
+            cout << "The file was saved";
+        }
+        else {
+            cout << "The fila wasn't saved";
+        }
     }
     catch (const std::exception& e) {
         cout << "Error: " << e.what() << '\n';

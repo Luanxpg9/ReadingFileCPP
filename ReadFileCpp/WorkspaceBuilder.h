@@ -152,9 +152,20 @@ namespace WorkspaceBuilder {
         *
         */
         void PushEndline(std::vector<std::string>& stringVector, int endlineCount);
+
+        /**
+        * Saves a vector<string> in filename as string.
+        *
+        * @param filename: The path where the file will be saved
+        * @param lines: A reference to the vector<string> that will be saved in the file.
+        *
+        * @return A boolean telling if the file was saved or not.
+        */
+        bool SaveWkspfile(std::string filename, const std::vector<std::string>& lines);
     }
     #pragma endregion
 
+    #pragma region Functions
     namespace Functions {
         /**
         * Get workflow comment lines in a .wksp file
@@ -260,6 +271,29 @@ namespace WorkspaceBuilder {
         */
         WorkspaceBuilder::Structs::Workflow ParseWorkflow(const std::vector<std::string>& workflowLines, bool verbose = false);
 
+        /**
+        * Convert a workflow structure in a vector<string> 
+        *
+        * @param workflow: A reference to the VGL workflow struct.
+        * @param verbose: If true prints in the console what the program is parsing. Default = false
+        * 
+        * @return If true the file was saved sucessfully. If not the file was not saved.
+        * 
+        */
         std::vector<std::string> ConvertWorkflowToVectorString(const WorkspaceBuilder::Structs::Workflow& workflow, bool verbose = false);
+
+        /**
+        * Saves a workflow structure to the given filename.
+        *   Existing file in this path shall be overridden.
+        *
+        * @param workflow: A reference to the VGL workflow struct.
+        * @param verbose: If true prints in the console what the program is parsing. Default = false
+        *
+        * @return If true the file was saved sucessfully. If not the file was not saved.
+        *
+        */
+        int SaveWorkflow(std::string filename, const WorkspaceBuilder::Structs::Workflow& workflow, bool verbose = false);
     }
+
+#pragma endregion
 }

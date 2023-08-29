@@ -75,6 +75,26 @@ namespace WorkspaceBuilder {
                 stringVector.push_back(endline);
             }
         }
+
+        bool SaveWkspfile(std::string filename, const std::vector<std::string>& lines) {
+            std::fstream myFile;
+
+            myFile.open(filename, std::ios::out);
+
+            if (!myFile) {
+                return false;
+            }
+            else {
+                for (std::string line : lines) {
+                    line.append("\n");
+                    myFile << line;
+                }
+
+                myFile.close();
+            }
+
+            return true;
+        }
 	}
 
     namespace Functions {
@@ -602,7 +622,11 @@ namespace WorkspaceBuilder {
             std::vector<std::string> workflowLines;
             std::string separator = ":";
 
+            
             // Insert header
+            if (verbose)
+                std::cout << "Adding header" << std::endl;
+            
             workflowLines.push_back("# VisionGL Visual Programming Workspace");
             workflowLines.push_back("# ");
             workflowLines.push_back("# This is an auto generated file.");
@@ -615,6 +639,9 @@ namespace WorkspaceBuilder {
             WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 1);
             
             // Insert Variables
+            if (verbose)
+                std::cout << "Converting global variables" << std::endl;
+
             workflowLines.push_back("VariablesBegin: ");
             for (WorkspaceBuilder::Structs::Variable var : workflow.globalVariables) {
                 std::string line = var.key;
@@ -627,6 +654,9 @@ namespace WorkspaceBuilder {
             WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
 
             // Insert Glyphs
+            if (verbose)
+                std::cout << "Converting blocks" << std::endl;
+
             for (WorkspaceBuilder::Structs::Block block : workflow.blocks) {
                 std::string line = "Glyph:VGL_CL:";
                 // Function type
@@ -645,6 +675,9 @@ namespace WorkspaceBuilder {
                 line.append(" ");
 
                 // Append parameters
+                if (verbose)
+                    std::cout << "\tConverting block parameter" << std::endl;
+
                 for (WorkspaceBuilder::Structs::Variable var : block.variables) {
                     line.append("-")
                         .append(var.key)
@@ -659,6 +692,9 @@ namespace WorkspaceBuilder {
             WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
 
             // Insert Connections
+            if (verbose)
+                std::cout << "Converting connections" << std::endl;
+
             for (WorkspaceBuilder::Structs::Connection connection : workflow.connections) {
                 std::string line = "NodeConnection:data:";
                 line.append(std::to_string(connection.startBlock)).append(separator);
@@ -672,6 +708,9 @@ namespace WorkspaceBuilder {
             WorkspaceBuilder::SupportFunctions::PushEndline(workflowLines, 2);
 
             // Insert Comments
+            if (verbose)
+                std::cout << "Converting comments" << std::endl;
+
             workflowLines.push_back("AnnotationsBegin");
             for (WorkspaceBuilder::Structs::Comment comment : workflow.comments) {
                 std::string line = "#";
@@ -686,6 +725,25 @@ namespace WorkspaceBuilder {
             workflowLines.push_back("WorkspaceEnd: 1.0");
 
             return workflowLines;
+        }
+
+        int SaveWorkflow(std::string filename, const WorkspaceBuilder::Structs::Workflow& workflow, bool verbose) {
+            std::vector<std::string> convertedWorkflow;
+            bool saved;
+
+            // Convert workspace function
+            if (verbose)
+                std::cout << "Converting workspace" << std::endl;
+
+            convertedWorkflow = ConvertWorkflowToVectorString(workflow, verbose);
+
+            // Save vector<string> to file adding \n to each line
+            if (verbose)
+                std::cout << "Saving workspace" << std::endl;
+
+            saved = WorkspaceBuilder::SupportFunctions::SaveWkspfile(filename, convertedWorkflow);
+
+            return saved;
         }
     }
 }
