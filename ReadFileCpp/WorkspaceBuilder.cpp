@@ -86,6 +86,9 @@ namespace WorkspaceBuilder {
             }
             else {
                 for (std::string line : lines) {
+                    if (line.back() == ' ') {
+                        line.pop_back();
+                    }
                     line.append("\n");
                     myFile << line;
                 }
@@ -646,7 +649,13 @@ namespace WorkspaceBuilder {
             for (WorkspaceBuilder::Structs::Variable var : workflow.globalVariables) {
                 std::string line = var.key;
                 line.append(" = ");
+                if (var.type == WorkspaceBuilder::Enums::String) {
+                    line.append("\'");
+                }
                 line.append(var.value);
+                if (var.type == WorkspaceBuilder::Enums::String) {
+                    line.append("\'");
+                }
 
                 workflowLines.push_back(line);
             }
@@ -681,9 +690,15 @@ namespace WorkspaceBuilder {
                 for (WorkspaceBuilder::Structs::Variable var : block.variables) {
                     line.append("-")
                         .append(var.key)
-                        .append(" ")
-                        .append(var.value)
                         .append(" ");
+                    if (var.type == WorkspaceBuilder::Enums::String) {
+                        line.append("\'");
+                    }
+                    line.append(var.value);
+                    if (var.type == WorkspaceBuilder::Enums::String) {
+                        line.append("\'");
+                    }
+                    line.append(" ");
                 }
 
                 workflowLines.push_back(line);

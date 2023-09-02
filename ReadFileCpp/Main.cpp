@@ -10,19 +10,23 @@ int main() {
 
         vector<string> workflowLinesReparsed;
 
-        string fileName = "teste.wksp";
+        string fileName = "demo.wksp";
 
         workflowLines = WorkspaceBuilder::SupportFunctions::GetLinesFromFile(fileName);
 
         WorkspaceBuilder::Structs::Workflow workflow = WorkspaceBuilder::Functions::ParseWorkflow(workflowLines, false);
 
-        workflowLinesReparsed = WorkspaceBuilder::Functions::ConvertWorkflowToVectorString(workflow);
-
-        for (string line : workflowLinesReparsed) {
-            cout << line << endl;
+        for (WorkspaceBuilder::Structs::Block block : workflow.blocks) {
+            cout << "Block: " << block.id << endl;
+            for (WorkspaceBuilder::Structs::Variable var : block.variables) {
+                cout << "\tValue: " << var.value << endl;
+                cout << "\tType: " << var.type << endl;
+            }
         }
 
-        int saved = WorkspaceBuilder::SupportFunctions::SaveWkspfile("testing123.wksp", workflowLinesReparsed);
+        workflowLinesReparsed = WorkspaceBuilder::Functions::ConvertWorkflowToVectorString(workflow);
+        
+        int saved = WorkspaceBuilder::SupportFunctions::SaveWkspfile("teste.wksp", workflowLinesReparsed);
         
         
         if (saved) {
